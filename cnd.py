@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+import re
 import getpass
 import socket
 import os
@@ -22,13 +23,24 @@ def whois_lookup(ip):
             abuse_email = item.strip().split()
             return abuse_email[1]
 
-'''
 # Monitor SSH for brute force attempts, pass offenders to whois_lookup()
 def ssh_monitor():
+    ip_list = {}
     if os.path.isfile("/var/log/auth.log"):
         authlog_f = file("/var/log/auth.log", "r")
-'''
- 
+        try:
+            for line in authlog_f:
+                line = line.rstrip()
+                match = re.search("Failed password for", line)
+                if match:
+                    line = line.split(' ')
+                    ip = line[-4]
+                    if ip_check(ip) == True and ip not in ip_list:
+                        ip_list[ip] = line
+        except Exception, e:
+            print "[!] An error in reading logs"
+            print e
+    return ip_list
                 
 def ip_check(ip):            
     try:
@@ -56,6 +68,8 @@ def main():
     if ip_check(sys.argv[1]) == False:
         print "[+] Error: Bad IP address, exiting..."
         exit()
+    ip_list = ssh_monitor()
+    print ip_list
     print '[+] Sending to whois'
     abuse_email = whois_lookup(sys.argv[1])
     password = getpass.getpass()
@@ -64,8 +78,6 @@ def main():
     #subject and body are going to be assigned by log parsing
     send_email(abuse_email, sender_email, subject, body, password)
 
-
-# parse logs to get all abuse IP then sendmail it up
 
 if __name__ == '__main__':
     main()
