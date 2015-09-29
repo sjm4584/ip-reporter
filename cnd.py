@@ -21,7 +21,7 @@ def whois_lookup(ip):
     for item in cmd_output[0].split('\n'):
         if 'OrgAbuseEmail' in item:
             abuse_email = item.strip().split()
-            return abuse_email[1]
+            print abuse_email[1]
 
 # Monitor SSH for brute force attempts, pass offenders to whois_lookup()
 def ssh_monitor():
@@ -69,14 +69,16 @@ def main():
         print "[+] Error: Bad IP address, exiting..."
         exit()
     ip_list = ssh_monitor()
-    print ip_list
     print '[+] Sending to whois'
-    abuse_email = whois_lookup(sys.argv[1])
-    password = getpass.getpass()
-    sender_email = raw_input("Sender email: ")
+    for key, val in ip_list.iteritems():
+       whois_lookup(key)
+    #print ip_list
+#    abuse_email = whois_lookup(sys.argv[1])
+#    password = getpass.getpass()
+#    sender_email = raw_input("Sender email: ")
 
     #subject and body are going to be assigned by log parsing
-    send_email(abuse_email, sender_email, subject, body, password)
+#    send_email(abuse_email, sender_email, subject, body, password)
 
 
 if __name__ == '__main__':
